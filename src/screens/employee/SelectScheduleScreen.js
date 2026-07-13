@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { getMySchedules } from "../../api/schedules";
@@ -36,6 +36,12 @@ export default function SelectScheduleScreen({ navigation }) {
     });
   }
 
+  function handleCustom() {
+    // No scheduleId, no schedule param — SubmitReportScreen already
+    // handles this: no frequency box, empty title, ad-hoc report with schedule_id: null.
+    navigation.navigate("SubmitReport", {});
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -53,6 +59,20 @@ export default function SelectScheduleScreen({ navigation }) {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor="#2563EB" />
           }
+          ListHeaderComponent={
+            <TouchableOpacity style={styles.customCard} onPress={handleCustom} activeOpacity={0.7}>
+              <View style={styles.customIconWrap}>
+                <Ionicons name="create-outline" size={20} color="#2563EB" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.customTitle}>Submit a Custom Report</Text>
+                <Text style={styles.customSubtitle}>
+                  Not on a schedule? Report something ad-hoc, like a missing item or issue.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+          }
           renderItem={({ item }) => (
             <ScheduleCard schedule={item} onPress={() => handleSelect(item)} />
           )}
@@ -61,7 +81,7 @@ export default function SelectScheduleScreen({ navigation }) {
               <Ionicons name="calendar-outline" size={56} color="#D1D5DB" />
               <Text style={styles.emptyTitle}>No schedules yet</Text>
               <Text style={styles.emptySubtitle}>
-                Your department has no report schedules assigned right now.
+                Your department has no report schedules assigned right now — you can still submit a custom report above.
               </Text>
             </View>
           }
@@ -83,6 +103,27 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 22, fontWeight: "800", color: "#111827" },
   headerSubtitle: { fontSize: 13, color: "#6B7280", marginTop: 4 },
+  customCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    gap: 12,
+  },
+  customIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#EFF6FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  customTitle: { fontSize: 14.5, fontWeight: "700", color: "#111827" },
+  customSubtitle: { fontSize: 12, color: "#6B7280", marginTop: 2 },
   empty: { alignItems: "center", justifyContent: "center", marginTop: 80 },
   emptyTitle: { fontSize: 16, fontWeight: "700", color: "#374151", marginTop: 12 },
   emptySubtitle: { fontSize: 13, color: "#9CA3AF", marginTop: 4, textAlign: "center", paddingHorizontal: 30 },

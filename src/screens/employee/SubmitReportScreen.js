@@ -76,6 +76,15 @@ export default function SubmitReportScreen({ route, navigation }) {
         </View>
       )}
 
+      {!schedule && (
+        <View style={styles.customInfo}>
+          <Ionicons name="create-outline" size={16} color="#6B7280" />
+          <Text style={styles.customInfoText}>
+            Custom report — not tied to a recurring schedule
+          </Text>
+        </View>
+      )}
+
       <Text style={styles.label}>Title</Text>
       <TextInput
         style={styles.input}
@@ -127,6 +136,16 @@ const styles = StyleSheet.create({
   scheduleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   scheduleLabel: { fontSize: 13.5, fontWeight: "700", color: "#2563EB", marginLeft: 6 },
   schedulePeriod: { fontSize: 12, color: "#4B5563", marginTop: 4 },
+  customInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 18,
+  },
+  customInfoText: { fontSize: 12.5, color: "#6B7280" },
   label: { fontSize: 14, fontWeight: "600", marginBottom: 6, marginTop: 4 },
   input: {
     borderWidth: 1,
