@@ -7,13 +7,18 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { submitReport } from "../../api/reports";
+import { formatFrequency, periodLabel } from "../../utils/scheduleUtils";
 
 export default function SubmitReportScreen({ route, navigation }) {
-  const scheduleId = route.params?.scheduleId; // passed in if submitting against a specific schedule
-  const [title, setTitle] = useState("");
+  const scheduleId = route.params?.scheduleId;
+  const schedule = route.params?.schedule; // passed from SelectScheduleScreen
+
+  const [title, setTitle] = useState(schedule?.title || "");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -47,14 +52,30 @@ export default function SubmitReportScreen({ route, navigation }) {
       Alert.alert("Success", "Report submitted.");
       navigation.goBack();
     } catch (err) {
-      Alert.alert("Submission failed", err?.response?.data?.error || "Please try again.");
+      const message = err?.response?.data?.error || "Please try again.";
+      // Duplicate-period conflict from backend (409)
+      if (err?.response?.status === 409) {
+        Alert.alert("Already submitted", message);
+      } else {
+        Alert.alert("Submission failed", message);
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      {schedule && (
+        <View style={styles.scheduleInfo}>
+          <View style={styles.scheduleRow}>
+            <Ionicons name="repeat-outline" size={16} color="#2563EB" />
+            <Text style={styles.scheduleLabel}>{formatFrequency(schedule.frequency)}</Text>
+          </View>
+          <Text style={styles.schedulePeriod}>{periodLabel(schedule)}</Text>
+        </View>
+      )}
+
       <Text style={styles.label}>Title</Text>
       <TextInput
         style={styles.input}
@@ -91,12 +112,21 @@ export default function SubmitReportScreen({ route, navigation }) {
           <Text style={styles.submitButtonText}>Submit Report</Text>
         )}
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  scheduleInfo: {
+    backgroundColor: "#EFF6FF",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 18,
+  },
+  scheduleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  scheduleLabel: { fontSize: 13.5, fontWeight: "700", color: "#2563EB", marginLeft: 6 },
+  schedulePeriod: { fontSize: 12, color: "#4B5563", marginTop: 4 },
   label: { fontSize: 14, fontWeight: "600", marginBottom: 6, marginTop: 4 },
   input: {
     borderWidth: 1,

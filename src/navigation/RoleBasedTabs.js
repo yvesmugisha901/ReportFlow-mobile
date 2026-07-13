@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { ROLES } from "../constants/config";
 import EmployeeStack from "./EmployeeStack";
 import ReviewerStack from "./ReviewerStack";
+import ReviewerDashboardStack from "./ReviewerDashboardStack";
 import AdminStack from "./AdminStack";
 import NotificationsScreen from "../screens/shared/NotificationsScreen";
 import ProfileScreen from "../screens/shared/ProfileScreen";
@@ -38,7 +39,10 @@ export default function RoleBasedTabs() {
         <Tab.Screen name="Reports" component={EmployeeStack} />
       )}
 
-      {/* Reviewers and Approvers both act on pending reports at their stage */}
+      {/* Reviewers and Approvers get a dashboard tab first, then the queue */}
+      {(user?.role === ROLES.REVIEWER || user?.role === ROLES.APPROVER) && (
+        <Tab.Screen name="Dashboard" component={ReviewerDashboardStack} />
+      )}
       {(user?.role === ROLES.REVIEWER || user?.role === ROLES.APPROVER) && (
         <Tab.Screen name="Approvals" component={ReviewerStack} />
       )}

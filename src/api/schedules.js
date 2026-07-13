@@ -1,7 +1,14 @@
 import client from "./client";
 
-// Returns schedules relevant to the current user (backend should filter by dept/team/role)
-export async function getSchedules() {
+export async function getMySchedules() {
   const response = await client.get("/schedules");
-  return response.data;
+  return response.data.schedules;
+}
+
+// Alias for compatibility with existing screens that import getSchedules
+export const getSchedules = getMySchedules;
+
+export async function getScheduleById(scheduleId) {
+  const response = await client.get(`/schedules/${scheduleId}`);
+  return response.data.schedule;
 }
