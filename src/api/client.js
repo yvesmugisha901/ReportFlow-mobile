@@ -7,7 +7,6 @@ const client = axios.create({
   timeout: 15000,
 });
 
-// Attach the JWT token to every request automatically, if we have one
 client.interceptors.request.use(async (requestConfig) => {
   const token = await SecureStore.getItemAsync("authToken");
   if (token) {
@@ -16,16 +15,18 @@ client.interceptors.request.use(async (requestConfig) => {
   return requestConfig;
 });
 
-// Handle expired/invalid tokens globally
 client.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response && error.response.status === 401) {
       await SecureStore.deleteItemAsync("authToken");
-      // AuthContext listens for this via the logout flow triggered on next auth check
     }
     return Promise.reject(error);
   }
 );
+
+// Origin for serving static files (uploads), derived by stripping a trailing "/api"
+// e.g. "http://192.168.1.179:5000/api" -> "http://192.168.1.179:5000"
+export const SERVER_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
 export default client;

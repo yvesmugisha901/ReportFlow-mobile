@@ -10,17 +10,21 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import { getReportById } from "../../api/reports";
 import { submitReviewDecision } from "../../api/reviews";
+import { SERVER_ORIGIN } from "../../api/client";
 import StatusBadge from "../../components/StatusBadge";
 import { timeAgo, initials } from "../../utils/timeAgo";
 
 export default function ReviewDetailScreen({ route, navigation }) {
-  const { reportId } = route.params; // role no longer needed — backend infers it from req.user
+  const { reportId } = route.params;
   const [report, setReport] = useState(null);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
-  const [acting, setActing] = useState(null); // holds which action is in-flight
+  const [acting, setActing] = useState(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     getReportById(reportId)
@@ -29,8 +33,29 @@ export default function ReviewDetailScreen({ route, navigation }) {
       .finally(() => setLoading(false));
   }, [reportId]);
 
+  async function handlePreview() {
+    if (!report?.file_url) return;
+    setDownloading(true);
+    try {
+      const remoteUrl = `${SERVER_ORIGIN}${report.file_url}`;
+      const localUri = FileSystem.documentDirectory + report.file_name;
+      const { uri } = await FileSystem.downloadAsync(remoteUrl, localUri);
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri);
+      } else {
+        Alert.alert("Downloaded", `Saved to ${uri}`);
+      }
+    } catch (err) {
+      console.warn("Preview failed", err);
+      Alert.alert("Could not open attachment", "Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   async function handleDecision(action) {
-    // action: "approve" | "changes" | "reject"
     if (action === "reject" && !comment.trim()) {
       Alert.alert("Comment required", "A comment is required when rejecting a report.");
       return;
@@ -53,10 +78,12 @@ export default function ReviewDetailScreen({ route, navigation }) {
 
   const submitter = report.submittedBy || report.employee || {};
   const reviewLogs = report.reviewLogs || [];
+  // If this report already has a decision recorded (accessed from history),
+  // don't show the action buttons again — read-only view.
+  const alreadyDecided = ["approved", "rejected", "changes_requested"].includes(report.status);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      {/* Header card */}
       <View style={styles.headerCard}>
         <View style={styles.headerTopRow}>
           <Text style={styles.title}>{report.title || report.type}</Text>
@@ -83,7 +110,6 @@ export default function ReviewDetailScreen({ route, navigation }) {
         ) : null}
       </View>
 
-      {/* Content */}
       {report.content ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Content</Text>
@@ -92,15 +118,23 @@ export default function ReviewDetailScreen({ route, navigation }) {
       ) : null}
 
       {report.file_name ? (
-        <View style={styles.attachmentRow}>
+        <TouchableOpacity
+          style={styles.attachmentRow}
+          onPress={handlePreview}
+          disabled={downloading}
+        >
           <Ionicons name="document-attach-outline" size={18} color="#2563EB" />
           <Text style={styles.attachmentText} numberOfLines={1}>
             {report.file_name}
           </Text>
-        </View>
+          {downloading ? (
+            <ActivityIndicator size="small" color="#2563EB" />
+          ) : (
+            <Ionicons name="eye-outline" size={18} color="#2563EB" />
+          )}
+        </TouchableOpacity>
       ) : null}
 
-      {/* Review history */}
       {reviewLogs.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Review History</Text>
@@ -120,46 +154,54 @@ export default function ReviewDetailScreen({ route, navigation }) {
         </View>
       )}
 
-      {/* Decision */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Decision</Text>
-        <TextInput
-          style={styles.textArea}
-          multiline
-          numberOfLines={4}
-          placeholder="Add a comment for the employee (required when rejecting)..."
-          placeholderTextColor="#9CA3AF"
-          value={comment}
-          onChangeText={setComment}
-        />
-
-        <View style={styles.actionsRow}>
-          <ActionButton
-            label="Approve"
-            icon="checkmark-circle"
-            color="#16A34A"
-            loading={acting === "approve"}
-            disabled={!!acting}
-            onPress={() => handleDecision("approve")}
-          />
-          <ActionButton
-            label="Changes"
-            icon="create-outline"
-            color="#D97706"
-            loading={acting === "changes"}
-            disabled={!!acting}
-            onPress={() => handleDecision("changes")}
-          />
-          <ActionButton
-            label="Reject"
-            icon="close-circle"
-            color="#DC2626"
-            loading={acting === "reject"}
-            disabled={!!acting}
-            onPress={() => handleDecision("reject")}
-          />
+      {alreadyDecided ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Decision</Text>
+          <Text style={styles.decidedText}>
+            This report has already been reviewed — see history above.
+          </Text>
         </View>
-      </View>
+      ) : (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Decision</Text>
+          <TextInput
+            style={styles.textArea}
+            multiline
+            numberOfLines={4}
+            placeholder="Add a comment for the employee (required when rejecting)..."
+            placeholderTextColor="#9CA3AF"
+            value={comment}
+            onChangeText={setComment}
+          />
+
+          <View style={styles.actionsRow}>
+            <ActionButton
+              label="Approve"
+              icon="checkmark-circle"
+              color="#16A34A"
+              loading={acting === "approve"}
+              disabled={!!acting}
+              onPress={() => handleDecision("approve")}
+            />
+            <ActionButton
+              label="Changes"
+              icon="create-outline"
+              color="#D97706"
+              loading={acting === "changes"}
+              disabled={!!acting}
+              onPress={() => handleDecision("changes")}
+            />
+            <ActionButton
+              label="Reject"
+              icon="close-circle"
+              color="#DC2626"
+              loading={acting === "reject"}
+              disabled={!!acting}
+              onPress={() => handleDecision("reject")}
+            />
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -241,7 +283,7 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
   },
-  attachmentText: { color: "#2563EB", fontSize: 13, fontWeight: "600", marginLeft: 6, flexShrink: 1 },
+  attachmentText: { color: "#2563EB", fontSize: 13, fontWeight: "600", marginLeft: 6, flexShrink: 1, flex: 1 },
   historyRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -252,6 +294,7 @@ const styles = StyleSheet.create({
   historyStatus: { fontSize: 13, fontWeight: "600", color: "#111827", textTransform: "capitalize" },
   historyComment: { fontSize: 12.5, color: "#6B7280", marginTop: 3 },
   historyDate: { fontSize: 11, color: "#9CA3AF", marginLeft: 8 },
+  decidedText: { fontSize: 13, color: "#6B7280", fontStyle: "italic" },
   textArea: {
     borderWidth: 1,
     borderColor: "#E5E7EB",

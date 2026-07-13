@@ -82,9 +82,9 @@ export default function MyReportsScreen({ navigation }) {
             <Text style={styles.newButtonText}>Submit New Report</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.sectionTitle, { marginHorizontal: 16, marginTop: 8 }]}>
-            Recent Reports
-          </Text>
+        <Text style={[styles.sectionTitle, { marginHorizontal: 16, marginTop: 8 }]}>
+  My Reports
+</Text>
         </>
       }
       contentContainerStyle={{ paddingBottom: 24 }}
