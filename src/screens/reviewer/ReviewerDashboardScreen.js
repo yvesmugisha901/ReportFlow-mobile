@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -60,7 +61,6 @@ export default function ReviewerDashboardScreen({ navigation }) {
     const changesCount = monthLogs.filter((h) => h.action === "changes_requested").length;
     const rejectedCount = monthLogs.filter((h) => h.action === "rejected").length;
 
-    // Average turnaround: time between report submission and this reviewer's decision
     const turnarounds = monthLogs
       .map((h) => {
         const submitted = h.report?.submitted_at;
@@ -112,6 +112,7 @@ export default function ReviewerDashboardScreen({ navigation }) {
           label="Reviewed this month"
           color="#059669"
           bg="#ECFDF5"
+          onPress={() => navigation.navigate("ReviewHistory")}
         />
       </View>
 
@@ -139,7 +140,14 @@ export default function ReviewerDashboardScreen({ navigation }) {
 
       {/* Recent activity */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          {recent.length > 0 && (
+            <TouchableOpacity onPress={() => navigation.navigate("ReviewHistory")}>
+              <Text style={styles.seeAllText}>See all</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         {recent.length === 0 ? (
           <Text style={styles.emptyText}>No review activity yet.</Text>
         ) : (
@@ -149,8 +157,15 @@ export default function ReviewerDashboardScreen({ navigation }) {
               color: "#6B7280",
               icon: "ellipse-outline",
             };
+            const reportId = log.report?.report_id ?? log.report_id ?? log.reportId;
             return (
-              <View key={log.log_id} style={styles.activityRow}>
+              <TouchableOpacity
+                key={log.log_id}
+                style={styles.activityRow}
+                onPress={() => reportId && navigation.navigate("ReviewDetail", { reportId })}
+                disabled={!reportId}
+                activeOpacity={0.6}
+              >
                 <Ionicons name={meta.icon} size={18} color={meta.color} style={{ marginRight: 10 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.activityTitle} numberOfLines={1}>
@@ -159,7 +174,7 @@ export default function ReviewerDashboardScreen({ navigation }) {
                   <Text style={[styles.activityAction, { color: meta.color }]}>{meta.label}</Text>
                 </View>
                 <Text style={styles.activityTime}>{timeAgo(log.created_at)}</Text>
-              </View>
+              </TouchableOpacity>
             );
           })
         )}
@@ -169,7 +184,7 @@ export default function ReviewerDashboardScreen({ navigation }) {
 }
 
 function StatCard({ value, label, color, bg, onPress }) {
-  const Wrapper = onPress ? require("react-native").TouchableOpacity : View;
+  const Wrapper = onPress ? TouchableOpacity : View;
   return (
     <Wrapper style={[styles.statCard, { backgroundColor: bg }]} onPress={onPress} activeOpacity={0.7}>
       <Text style={[styles.statValue, { color }]}>{value}</Text>
@@ -213,14 +228,21 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 16,
   },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 13,
     fontWeight: "700",
     color: "#6B7280",
     textTransform: "uppercase",
     letterSpacing: 0.4,
-    marginBottom: 12,
+    marginBottom: 0,
   },
+  seeAllText: { fontSize: 12.5, fontWeight: "700", color: "#2563EB" },
   breakdownRow: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
   pill: {
     flex: 1,
