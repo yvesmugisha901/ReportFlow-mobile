@@ -11,7 +11,7 @@ export async function login(email, password) {
 
 export async function getCurrentUser() {
   const response = await client.get("/auth/me");
-  return response.data; // { id, name, email, role, department, team }
+  return response.data.user; // backend returns { success, user }, so unwrap to just the user
 }
 
 export async function logout() {

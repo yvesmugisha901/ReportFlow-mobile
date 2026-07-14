@@ -207,16 +207,13 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, paddingVertical: 10, fontSize: 14, color: "#111827" },
   filterRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
-  filterChip: {
+ filterChip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    marginRight: 8,
-  },
-  filterChipActive: { backgroundColor: "#4F46E5", borderColor: "#4F46E5" },
+
+},
+filterChipActive: { backgroundColor: "#4F46E5", borderColor: "#4F46E5" }, // only changes color, not size
   filterChipText: { fontSize: 12.5, fontWeight: "600", color: "#6B7280" },
   filterChipTextActive: { color: "#fff" },
   card: {
