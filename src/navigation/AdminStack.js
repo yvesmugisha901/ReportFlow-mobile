@@ -9,6 +9,8 @@ import CreateTeamScreen from "../screens/admin/CreateTeamScreen";
 import RegisterEmployeeScreen from "../screens/admin/RegisterEmployeeScreen";
 import UsersScreen from "../screens/admin/UsersScreen";
 import UserDetailScreen from "../screens/admin/UserDetailScreen";
+import SchedulesScreen from "../screens/admin/SchedulesScreen";
+import ScheduleFormScreen from "../screens/admin/ScheduleFormScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +28,10 @@ export default function AdminStack() {
       <Stack.Screen name="RegisterEmployee" component={RegisterEmployeeScreen} options={{ title: "Register Employee" }} />
       <Stack.Screen name="Users" component={UsersScreen} options={{ title: "Users" }} />
       <Stack.Screen name="UserDetail" component={UserDetailScreen} options={{ title: "User Details" }} />
+
+      <Stack.Screen name="Schedules" component={SchedulesScreen} options={{ title: "Schedules" }} />
+      <Stack.Screen name="CreateSchedule" component={ScheduleFormScreen} options={{ title: "New Schedule" }} />
+      <Stack.Screen name="EditSchedule" component={ScheduleFormScreen} options={{ title: "Edit Schedule" }} />
     </Stack.Navigator>
   );
 }

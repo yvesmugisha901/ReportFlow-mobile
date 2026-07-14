@@ -21,6 +21,7 @@ const QUICK_ACTIONS = [
   { key: "RegisterEmployee", label: "Register", icon: "person-add-outline", color: "#4F46E5", bg: "#EEF2FF" },
   { key: "Users", label: "Users", icon: "people-outline", color: "#059669", bg: "#ECFDF5" },
   { key: "Departments", label: "Departments", icon: "business-outline", color: "#2563EB", bg: "#EFF6FF" },
+  { key: "Schedules", label: "Schedules", icon: "calendar-outline", color: "#D97706", bg: "#FFFBEB" },
 ];
 
 export default function DashboardScreen({ navigation }) {
@@ -201,9 +202,9 @@ const styles = StyleSheet.create({
   errorText: { color: "#dc2626", marginBottom: 10 },
   retryText: { color: "#2563eb", fontWeight: "600" },
   heading: { fontSize: 20, fontWeight: "800", color: "#111827", marginBottom: 16 },
-  quickActionsRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  quickActionsRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
   quickAction: {
-    flex: 1,
+    width: "47%",
     alignItems: "center",
     borderRadius: 14,
     paddingVertical: 14,
