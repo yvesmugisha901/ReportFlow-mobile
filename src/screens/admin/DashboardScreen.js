@@ -17,6 +17,12 @@ import ComplianceList from "../../components/ComplianceList";
 import ApproveUserModal from "./ApproveUserModal";
 import { normalizeReport, timeAgo, initials } from "../../utils/reportUtils";
 
+const QUICK_ACTIONS = [
+  { key: "RegisterEmployee", label: "Register", icon: "person-add-outline", color: "#4F46E5", bg: "#EEF2FF" },
+  { key: "Users", label: "Users", icon: "people-outline", color: "#059669", bg: "#ECFDF5" },
+  { key: "Departments", label: "Departments", icon: "business-outline", color: "#2563EB", bg: "#EFF6FF" },
+];
+
 export default function DashboardScreen({ navigation }) {
   const [dashData, setDashData] = useState(null);
   const [pendingUsers, setPendingUsers] = useState([]);
@@ -102,6 +108,20 @@ export default function DashboardScreen({ navigation }) {
     >
       <Text style={styles.heading}>Admin Dashboard</Text>
 
+      <View style={styles.quickActionsRow}>
+        {QUICK_ACTIONS.map((action) => (
+          <TouchableOpacity
+            key={action.key}
+            style={[styles.quickAction, { backgroundColor: action.bg }]}
+            onPress={() => navigation.navigate(action.key)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name={action.icon} size={20} color={action.color} />
+            <Text style={[styles.quickActionText, { color: action.color }]}>{action.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <View style={styles.grid}>
         {stats.map((s) => (
           <StatCard key={s.label} {...s} />
@@ -181,6 +201,15 @@ const styles = StyleSheet.create({
   errorText: { color: "#dc2626", marginBottom: 10 },
   retryText: { color: "#2563eb", fontWeight: "600" },
   heading: { fontSize: 20, fontWeight: "800", color: "#111827", marginBottom: 16 },
+  quickActionsRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  quickAction: {
+    flex: 1,
+    alignItems: "center",
+    borderRadius: 14,
+    paddingVertical: 14,
+    gap: 6,
+  },
+  quickActionText: { fontSize: 11.5, fontWeight: "700" },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
   section: { marginTop: 8, marginBottom: 8 },
   sectionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },

@@ -105,14 +105,14 @@ export default function ReviewerDashboardScreen({ navigation }) {
           label="Awaiting you"
           color="#2563EB"
           bg="#EFF6FF"
-          onPress={() => navigation.navigate("PendingApprovals")}
+          onPress={() => navigation.navigate("Approvals", { screen: "PendingApprovals" })}
         />
         <StatCard
           value={stats.reviewedThisMonth}
           label="Reviewed this month"
           color="#059669"
           bg="#ECFDF5"
-          onPress={() => navigation.navigate("ReviewHistory")}
+          onPress={() => navigation.navigate("Approvals", { screen: "ReviewHistory" })}
         />
       </View>
 
@@ -143,7 +143,9 @@ export default function ReviewerDashboardScreen({ navigation }) {
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
           {recent.length > 0 && (
-            <TouchableOpacity onPress={() => navigation.navigate("ReviewHistory")}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Approvals", { screen: "ReviewHistory" })}
+            >
               <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
           )}
@@ -162,7 +164,13 @@ export default function ReviewerDashboardScreen({ navigation }) {
               <TouchableOpacity
                 key={log.log_id}
                 style={styles.activityRow}
-                onPress={() => reportId && navigation.navigate("ReviewDetail", { reportId })}
+                onPress={() =>
+                  reportId &&
+                  navigation.navigate("Approvals", {
+                    screen: "ReviewDetail",
+                    params: { reportId },
+                  })
+                }
                 disabled={!reportId}
                 activeOpacity={0.6}
               >
