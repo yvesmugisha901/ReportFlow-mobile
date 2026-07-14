@@ -2,6 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
+import { useBadgeCounts } from "../context/BadgeCountsContext";
 import { ROLES } from "../constants/config";
 import EmployeeStack from "./EmployeeStack";
 import ReviewerStack from "./ReviewerStack";
@@ -22,6 +23,7 @@ const ICONS = {
 
 export default function RoleBasedTabs() {
   const { user } = useAuth();
+  const { unreadNotifications, pendingApprovals } = useBadgeCounts();
 
   return (
     <Tab.Navigator
@@ -34,25 +36,34 @@ export default function RoleBasedTabs() {
         ),
       })}
     >
-      {/* Employees submit and track their own reports */}
       {user?.role === ROLES.EMPLOYEE && (
         <Tab.Screen name="Reports" component={EmployeeStack} />
       )}
 
-      {/* Reviewers and Approvers get a dashboard tab first, then the queue */}
       {(user?.role === ROLES.REVIEWER || user?.role === ROLES.APPROVER) && (
         <Tab.Screen name="Dashboard" component={ReviewerDashboardStack} />
       )}
       {(user?.role === ROLES.REVIEWER || user?.role === ROLES.APPROVER) && (
-        <Tab.Screen name="Approvals" component={ReviewerStack} />
+        <Tab.Screen
+          name="Approvals"
+          component={ReviewerStack}
+          options={{
+            tabBarBadge: pendingApprovals > 0 ? pendingApprovals : undefined,
+          }}
+        />
       )}
 
-      {/* Admin dashboard with stats, pending approvals, recent reports, compliance */}
       {user?.role === ROLES.ADMIN && (
         <Tab.Screen name="Dashboard" component={AdminStack} />
       )}
 
-      <Tab.Screen name="Notifications" component={NotificationsScreen} />
+      <Tab.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          tabBarBadge: unreadNotifications > 0 ? unreadNotifications : undefined,
+        }}
+      />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );

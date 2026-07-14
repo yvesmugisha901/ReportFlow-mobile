@@ -17,9 +17,11 @@ import { submitReviewDecision } from "../../api/reviews";
 import { SERVER_ORIGIN } from "../../api/client";
 import StatusBadge from "../../components/StatusBadge";
 import { timeAgo, initials } from "../../utils/timeAgo";
+import { useBadgeCounts } from "../../context/BadgeCountsContext";
 
 export default function ReviewDetailScreen({ route, navigation }) {
   const { reportId } = route.params;
+  const { refreshBadges } = useBadgeCounts();
   const [report, setReport] = useState(null);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,7 @@ export default function ReviewDetailScreen({ route, navigation }) {
     setActing(action);
     try {
       await submitReviewDecision(reportId, { action, comment });
+      refreshBadges();
       const doneLabel = action === "changes" ? "sent back for changes" : `${action}d`;
       Alert.alert("Done", `Report ${doneLabel}.`);
       navigation.goBack();
@@ -78,8 +81,6 @@ export default function ReviewDetailScreen({ route, navigation }) {
 
   const submitter = report.submittedBy || report.employee || {};
   const reviewLogs = report.reviewLogs || [];
-  // If this report already has a decision recorded (accessed from history),
-  // don't show the action buttons again — read-only view.
   const alreadyDecided = ["approved", "rejected", "changes_requested"].includes(report.status);
 
   return (
