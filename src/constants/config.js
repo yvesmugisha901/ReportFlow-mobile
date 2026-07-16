@@ -5,7 +5,7 @@
 // - Physical phone (WiFi) -> "http://<YOUR_LAPTOP_LAN_IP>:5000"  e.g. http://192.168.1.42:5000
 //
 // Replace 5000 with whatever port your Express backend runs on.
-export const API_BASE_URL = "http://10.200.103.135:5000/api";
+export const API_BASE_URL = "http://192.168.1.179:5000/api";
 
 export const STATUS = {
   PENDING: "Pending",
