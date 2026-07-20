@@ -4,6 +4,7 @@ import MyReportsScreen from "../screens/employee/MyReportsScreen";
 import SelectScheduleScreen from "../screens/employee/SelectScheduleScreen";
 import SubmitReportScreen from "../screens/employee/SubmitReportScreen";
 import ReportDetailScreen from "../screens/employee/ReportDetailScreen";
+import AllReportsScreen from "../screens/employee/AllReportsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -14,6 +15,7 @@ export default function EmployeeStack() {
       <Stack.Screen name="SelectSchedule" component={SelectScheduleScreen} options={{ title: "Select Schedule" }} />
       <Stack.Screen name="SubmitReport" component={SubmitReportScreen} options={{ title: "Submit Report" }} />
       <Stack.Screen name="ReportDetail" component={ReportDetailScreen} options={{ title: "Report Detail" }} />
+      <Stack.Screen name="AllReports" component={AllReportsScreen} options={{ title: "All Reports" }} />
     </Stack.Navigator>
   );
 }

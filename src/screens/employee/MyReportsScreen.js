@@ -15,6 +15,8 @@ import ReportCard from "../../components/ReportCard";
 import StatCard from "../../components/StatCard";
 import { normalizeReport } from "../../utils/reportUtils";
 
+const PREVIEW_LIMIT = 5;
+
 export default function MyReportsScreen({ navigation }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,9 @@ export default function MyReportsScreen({ navigation }) {
     rejected: normalized.filter((r) => r.status === "Rejected" || r.status === "Changes Requested").length,
   };
 
+  const preview = normalized.slice(0, PREVIEW_LIMIT);
+  const hasMore = normalized.length > PREVIEW_LIMIT;
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -63,7 +68,7 @@ export default function MyReportsScreen({ navigation }) {
     <FlatList
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      data={normalized}
+      data={preview}
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
         <>
@@ -82,9 +87,14 @@ export default function MyReportsScreen({ navigation }) {
             <Text style={styles.newButtonText}>Submit New Report</Text>
           </TouchableOpacity>
 
-        <Text style={[styles.sectionTitle, { marginHorizontal: 16, marginTop: 8 }]}>
-  My Reports
-</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>My Reports</Text>
+            {hasMore && (
+              <TouchableOpacity onPress={() => navigation.navigate("AllReports")}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </>
       }
       contentContainerStyle={{ paddingBottom: 24 }}
@@ -96,6 +106,17 @@ export default function MyReportsScreen({ navigation }) {
           />
         </View>
       )}
+      ListFooterComponent={
+        hasMore ? (
+          <TouchableOpacity
+            style={styles.viewAllButton}
+            onPress={() => navigation.navigate("AllReports")}
+          >
+            <Text style={styles.viewAllButtonText}>View All Reports</Text>
+            <Ionicons name="arrow-forward" size={16} color="#2563eb" />
+          </TouchableOpacity>
+        ) : null
+      }
       ListEmptyComponent={
         <Text style={styles.empty}>No reports yet — submit your first one above.</Text>
       }
@@ -119,6 +140,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   newButtonText: { color: "#fff", fontWeight: "700" },
-  sectionTitle: { fontSize: 14, fontWeight: "700", color: "#111827", marginBottom: 10 },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  sectionTitle: { fontSize: 14, fontWeight: "700", color: "#111827" },
+  viewAllText: { fontSize: 13, fontWeight: "700", color: "#2563eb" },
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    marginHorizontal: 16,
+    marginTop: 4,
+  },
+  viewAllButtonText: { color: "#2563eb", fontWeight: "700", fontSize: 13.5 },
   empty: { textAlign: "center", color: "#999", marginTop: 40, paddingHorizontal: 16 },
 });
