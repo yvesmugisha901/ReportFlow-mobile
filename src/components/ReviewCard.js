@@ -2,7 +2,13 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import StatusBadge from "./StatusBadge";
 
-export default function ReportCard({ report, onPress }) {
+function formatDate(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+}
+
+export default function ReviewCard({ report, onPress }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.header}>
@@ -17,7 +23,7 @@ export default function ReportCard({ report, onPress }) {
         <StatusBadge status={report.status} />
       </View>
       <Text style={styles.meta}>
-        {report.department} • {new Date(report.submittedAt || report.createdAt).toLocaleDateString()}
+        {report.department || "—"} • {formatDate(report.submitted_at || report.submittedAt || report.created_at || report.createdAt)}
       </Text>
     </TouchableOpacity>
   );

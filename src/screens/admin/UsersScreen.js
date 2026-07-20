@@ -92,26 +92,27 @@ export default function UsersScreen({ navigation }) {
         />
       </View>
 
-      <FlatList
-        horizontal
-        data={ROLE_FILTERS}
-        keyExtractor={(item) => String(item.value)}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-        renderItem={({ item }) => {
+      <View style={styles.segmentedControl}>
+        {ROLE_FILTERS.map((item) => {
           const active = roleFilter === item.value;
           return (
             <TouchableOpacity
-              style={[styles.filterChip, active && styles.filterChipActive]}
+              key={String(item.value)}
+              style={[styles.segment, active && styles.segmentActive]}
               onPress={() => setRoleFilter(item.value)}
+              activeOpacity={0.7}
             >
-              <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+              <Text
+                style={[styles.segmentText, active && styles.segmentTextActive]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 {item.label}
               </Text>
             </TouchableOpacity>
           );
-        }}
-      />
+        })}
+      </View>
 
       {loading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color="#2563EB" />
@@ -206,16 +207,38 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   searchInput: { flex: 1, paddingVertical: 10, fontSize: 14, color: "#111827" },
-  filterRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
- filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 999,
-
-},
-filterChipActive: { backgroundColor: "#4F46E5", borderColor: "#4F46E5" }, // only changes color, not size
-  filterChipText: { fontSize: 12.5, fontWeight: "600", color: "#6B7280" },
-  filterChipTextActive: { color: "#fff" },
+  segmentedControl: {
+    flexDirection: "row",
+    backgroundColor: "#F3F4F6",
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    borderRadius: 10,
+    padding: 3,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  segmentActive: {
+    backgroundColor: "#4F46E5",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  segmentText: {
+    fontSize: 11.5,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  segmentTextActive: {
+    color: "#fff",
+  },
   card: {
     flexDirection: "row",
     alignItems: "center",
