@@ -1,3 +1,4 @@
+
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,7 +29,7 @@ export default function StatCard({ label, value, icon, trend, color = "indigo" }
 
 const styles = StyleSheet.create({
   card: {
-    flexBasis: "48%",
+    width: "48%",
     backgroundColor: "#fff",
     borderRadius: 14,
     borderWidth: 1,

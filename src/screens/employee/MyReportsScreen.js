@@ -127,7 +127,14 @@ export default function MyReportsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 16 },
+statsGrid: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  alignItems: "flex-start",   // ← add this line
+  paddingHorizontal: 16,
+  paddingTop: 16,
+},
   newButton: {
     flexDirection: "row",
     alignItems: "center",
