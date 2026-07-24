@@ -27,7 +27,8 @@ export default function ReviewDetailScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(null);
   const [downloading, setDownloading] = useState(false);
-  const [showRejectComment, setShowRejectComment] = useState(false); // NEW
+  const [showRejectFlow, setShowRejectFlow] = useState(false); // NEW
+  const [rejectType, setRejectType] = useState("reject"); // NEW: "reject" | "changes"
 
   useEffect(() => {
     getReportById(reportId)
@@ -58,19 +59,21 @@ export default function ReviewDetailScreen({ route, navigation }) {
     }
   }
 
-  // NEW: Reject is now a two-step action — first tap reveals the comment box.
+  // NEW: Reject button opens the flow instead of submitting directly
   function handleRejectTap() {
-    setShowRejectComment(true);
+    setRejectType("reject");
+    setShowRejectFlow(true);
   }
 
   function cancelReject() {
-    setShowRejectComment(false);
+    setShowRejectFlow(false);
     setComment("");
+    setRejectType("reject");
   }
 
   async function handleDecision(action) {
-    if (action === "reject" && !comment.trim()) {
-      Alert.alert("Comment required", "A comment is required when rejecting a report.");
+    if ((action === "reject" || action === "changes") && !comment.trim()) {
+      Alert.alert("Comment required", "A comment is required to explain your decision.");
       return;
     }
     setActing(action);
@@ -177,16 +180,33 @@ export default function ReviewDetailScreen({ route, navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Decision</Text>
 
-          {showRejectComment ? (
+          {showRejectFlow ? (
             <>
-              <Text style={styles.rejectPrompt}>
-                Add a comment explaining why you're rejecting this report:
-              </Text>
+              <Text style={styles.rejectPrompt}>What's the outcome?</Text>
+              <View style={styles.typeToggleRow}>
+                <TypeOption
+                  label="Reject"
+                  selected={rejectType === "reject"}
+                  color="#DC2626"
+                  onPress={() => setRejectType("reject")}
+                />
+                <TypeOption
+                  label="Request Changes"
+                  selected={rejectType === "changes"}
+                  color="#D97706"
+                  onPress={() => setRejectType("changes")}
+                />
+              </View>
+
               <TextInput
                 style={styles.textArea}
                 multiline
                 numberOfLines={4}
-                placeholder="Reason for rejection..."
+                placeholder={
+                  rejectType === "changes"
+                    ? "Explain what changes are needed..."
+                    : "Explain why you're rejecting this report..."
+                }
                 placeholderTextColor="#9CA3AF"
                 value={comment}
                 onChangeText={setComment}
@@ -201,12 +221,12 @@ export default function ReviewDetailScreen({ route, navigation }) {
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 <ActionButton
-                  label="Confirm Reject"
-                  icon="close-circle"
-                  color="#DC2626"
-                  loading={acting === "reject"}
+                  label={rejectType === "changes" ? "Confirm Changes" : "Confirm Reject"}
+                  icon={rejectType === "changes" ? "create-outline" : "close-circle"}
+                  color={rejectType === "changes" ? "#D97706" : "#DC2626"}
+                  loading={acting === rejectType}
                   disabled={!!acting || !comment.trim()}
-                  onPress={() => handleDecision("reject")}
+                  onPress={() => handleDecision(rejectType)}
                 />
               </View>
             </>
@@ -219,14 +239,6 @@ export default function ReviewDetailScreen({ route, navigation }) {
                 loading={acting === "approve"}
                 disabled={!!acting}
                 onPress={() => handleDecision("approve")}
-              />
-              <ActionButton
-                label="Changes"
-                icon="create-outline"
-                color="#D97706"
-                loading={acting === "changes"}
-                disabled={!!acting}
-                onPress={() => handleDecision("changes")}
               />
               <ActionButton
                 label="Reject"
@@ -259,6 +271,23 @@ function ActionButton({ label, icon, color, loading, disabled, onPress }) {
           <Text style={styles.actionText}>{label}</Text>
         </>
       )}
+    </TouchableOpacity>
+  );
+}
+
+// NEW: small segmented-style toggle used inside the reject flow
+function TypeOption({ label, selected, color, onPress }) {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.typeOption,
+        selected && { backgroundColor: color + "1A", borderColor: color },
+      ]}
+      onPress={onPress}
+    >
+      <Text style={[styles.typeOptionText, selected && { color, fontWeight: "700" }]}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -334,6 +363,16 @@ const styles = StyleSheet.create({
   historyDate: { fontSize: 11, color: "#9CA3AF", marginLeft: 8 },
   decidedText: { fontSize: 13, color: "#6B7280", fontStyle: "italic" },
   rejectPrompt: { fontSize: 13, color: "#374151", marginBottom: 10, fontWeight: "500" },
+  typeToggleRow: { flexDirection: "row", gap: 8, marginBottom: 14 },
+  typeOption: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  typeOptionText: { fontSize: 12.5, fontWeight: "600", color: "#6B7280" },
   textArea: {
     borderWidth: 1,
     borderColor: "#E5E7EB",
