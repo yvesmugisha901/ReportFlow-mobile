@@ -27,6 +27,7 @@ export default function ReviewDetailScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  const [showRejectComment, setShowRejectComment] = useState(false); // NEW
 
   useEffect(() => {
     getReportById(reportId)
@@ -55,6 +56,16 @@ export default function ReviewDetailScreen({ route, navigation }) {
     } finally {
       setDownloading(false);
     }
+  }
+
+  // NEW: Reject is now a two-step action — first tap reveals the comment box.
+  function handleRejectTap() {
+    setShowRejectComment(true);
+  }
+
+  function cancelReject() {
+    setShowRejectComment(false);
+    setComment("");
   }
 
   async function handleDecision(action) {
@@ -165,42 +176,68 @@ export default function ReviewDetailScreen({ route, navigation }) {
       ) : (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Decision</Text>
-          <TextInput
-            style={styles.textArea}
-            multiline
-            numberOfLines={4}
-            placeholder="Add a comment for the employee (required when rejecting)..."
-            placeholderTextColor="#9CA3AF"
-            value={comment}
-            onChangeText={setComment}
-          />
 
-          <View style={styles.actionsRow}>
-            <ActionButton
-              label="Approve"
-              icon="checkmark-circle"
-              color="#16A34A"
-              loading={acting === "approve"}
-              disabled={!!acting}
-              onPress={() => handleDecision("approve")}
-            />
-            <ActionButton
-              label="Changes"
-              icon="create-outline"
-              color="#D97706"
-              loading={acting === "changes"}
-              disabled={!!acting}
-              onPress={() => handleDecision("changes")}
-            />
-            <ActionButton
-              label="Reject"
-              icon="close-circle"
-              color="#DC2626"
-              loading={acting === "reject"}
-              disabled={!!acting}
-              onPress={() => handleDecision("reject")}
-            />
-          </View>
+          {showRejectComment ? (
+            <>
+              <Text style={styles.rejectPrompt}>
+                Add a comment explaining why you're rejecting this report:
+              </Text>
+              <TextInput
+                style={styles.textArea}
+                multiline
+                numberOfLines={4}
+                placeholder="Reason for rejection..."
+                placeholderTextColor="#9CA3AF"
+                value={comment}
+                onChangeText={setComment}
+                autoFocus
+              />
+              <View style={styles.actionsRow}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={cancelReject}
+                  disabled={!!acting}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <ActionButton
+                  label="Confirm Reject"
+                  icon="close-circle"
+                  color="#DC2626"
+                  loading={acting === "reject"}
+                  disabled={!!acting || !comment.trim()}
+                  onPress={() => handleDecision("reject")}
+                />
+              </View>
+            </>
+          ) : (
+            <View style={styles.actionsRow}>
+              <ActionButton
+                label="Approve"
+                icon="checkmark-circle"
+                color="#16A34A"
+                loading={acting === "approve"}
+                disabled={!!acting}
+                onPress={() => handleDecision("approve")}
+              />
+              <ActionButton
+                label="Changes"
+                icon="create-outline"
+                color="#D97706"
+                loading={acting === "changes"}
+                disabled={!!acting}
+                onPress={() => handleDecision("changes")}
+              />
+              <ActionButton
+                label="Reject"
+                icon="close-circle"
+                color="#DC2626"
+                loading={false}
+                disabled={!!acting}
+                onPress={handleRejectTap}
+              />
+            </View>
+          )}
         </View>
       )}
     </ScrollView>
@@ -296,6 +333,7 @@ const styles = StyleSheet.create({
   historyComment: { fontSize: 12.5, color: "#6B7280", marginTop: 3 },
   historyDate: { fontSize: 11, color: "#9CA3AF", marginLeft: 8 },
   decidedText: { fontSize: 13, color: "#6B7280", fontStyle: "italic" },
+  rejectPrompt: { fontSize: 13, color: "#374151", marginBottom: 10, fontWeight: "500" },
   textArea: {
     borderWidth: 1,
     borderColor: "#E5E7EB",
@@ -316,6 +354,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 6,
   },
+  cancelButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  cancelText: { color: "#374151", fontWeight: "700", fontSize: 12.5 },
   actionText: { color: "#fff", fontWeight: "700", fontSize: 12.5, marginLeft: 4 },
   error: { textAlign: "center", marginTop: 40, color: "#999" },
 });
