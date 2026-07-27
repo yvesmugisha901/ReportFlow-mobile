@@ -20,7 +20,7 @@ import { timeAgo, initials } from "../../utils/timeAgo";
 import { useBadgeCounts } from "../../context/BadgeCountsContext";
 
 export default function ReviewDetailScreen({ route, navigation }) {
-  const { reportId } = route.params;
+  const { reportId, fromNotifications } = route.params;
   const { refreshBadges } = useBadgeCounts();
   const [report, setReport] = useState(null);
   const [comment, setComment] = useState("");
@@ -29,6 +29,26 @@ export default function ReviewDetailScreen({ route, navigation }) {
   const [downloading, setDownloading] = useState(false);
   const [showRejectFlow, setShowRejectFlow] = useState(false); // NEW
   const [rejectType, setRejectType] = useState("reject"); // NEW: "reject" | "changes"
+
+  // NEW: if we arrived here from the Notifications tab, override the
+  // header back button so it returns to Notifications instead of
+  // popping within this tab's own (empty) stack.
+  useEffect(() => {
+    if (fromNotifications) {
+      navigation.setOptions({
+        headerShown: true,
+        headerTitle: "",
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Notifications")}
+            style={{ paddingHorizontal: 8, paddingVertical: 4 }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#111827" />
+          </TouchableOpacity>
+        ),
+      });
+    }
+  }, [fromNotifications, navigation]);
 
   useEffect(() => {
     getReportById(reportId)
@@ -82,7 +102,11 @@ export default function ReviewDetailScreen({ route, navigation }) {
       refreshBadges();
       const doneLabel = action === "changes" ? "sent back for changes" : `${action}d`;
       Alert.alert("Done", `Report ${doneLabel}.`);
-      navigation.goBack();
+      if (fromNotifications) {
+        navigation.navigate("Notifications");
+      } else {
+        navigation.goBack();
+      }
     } catch (err) {
       Alert.alert("Action failed", err?.response?.data?.error || "Please try again.");
     } finally {

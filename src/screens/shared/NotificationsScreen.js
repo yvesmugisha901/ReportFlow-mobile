@@ -72,16 +72,19 @@ export default function NotificationsScreen({ navigation }) {
     }, [load])
   );
 
+  // UPDATED: pass fromNotifications so the detail screen knows to route
+  // its back button back to this screen instead of its own tab's stack.
   function goToReport(reportId) {
     if (!reportId) return;
+    const params = { reportId, fromNotifications: true };
 
     if (user?.role === ROLES.REVIEWER || user?.role === ROLES.APPROVER) {
-      navigation.navigate("Approvals", { screen: "ReviewDetail", params: { reportId } });
+      navigation.navigate("Approvals", { screen: "ReviewDetail", params });
     } else if (user?.role === ROLES.ADMIN) {
-      navigation.navigate("Dashboard", { screen: "ReportDetail", params: { reportId } });
+      navigation.navigate("Dashboard", { screen: "ReportDetail", params });
     } else {
       // employee
-      navigation.navigate("Reports", { screen: "ReportDetail", params: { reportId } });
+      navigation.navigate("Reports", { screen: "ReportDetail", params });
     }
   }
 

@@ -25,8 +25,13 @@ export default function RoleBasedTabs() {
   const { user } = useAuth();
   const { unreadNotifications, pendingApprovals } = useBadgeCounts();
 
+  // Employees land on "Reports" (it functions as their dashboard).
+  // Reviewers, Approvers, and Admins land on "Dashboard".
+  const initialRoute = user?.role === ROLES.EMPLOYEE ? "Reports" : "Dashboard";
+
   return (
     <Tab.Navigator
+      initialRouteName={initialRoute}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: "#2563eb",

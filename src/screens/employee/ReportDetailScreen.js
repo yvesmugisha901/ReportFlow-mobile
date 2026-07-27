@@ -21,7 +21,7 @@ import { normalizeReport } from "../../utils/reportUtils";
 const RESUBMITTABLE_STATUSES = ["Rejected", "Changes Requested"];
 
 export default function ReportDetailScreen({ route, navigation }) {
-  const { reportId } = route.params;
+  const { reportId, fromNotifications } = route.params;
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -31,6 +31,26 @@ export default function ReportDetailScreen({ route, navigation }) {
   const [notes, setNotes] = useState("");
   const [newFile, setNewFile] = useState(null);
   const [resubmitting, setResubmitting] = useState(false);
+
+  // NEW: if we arrived here from the Notifications tab, override the
+  // header back button so it returns to Notifications instead of
+  // popping within this tab's own (empty) stack.
+  useEffect(() => {
+    if (fromNotifications) {
+      navigation.setOptions({
+        headerShown: true,
+        headerTitle: "",
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Notifications")}
+            style={{ paddingHorizontal: 8, paddingVertical: 4 }}
+          >
+            <Ionicons name="arrow-back" size={24} color="#111827" />
+          </TouchableOpacity>
+        ),
+      });
+    }
+  }, [fromNotifications, navigation]);
 
   function load() {
     setLoading(true);
