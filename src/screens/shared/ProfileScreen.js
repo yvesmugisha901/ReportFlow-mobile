@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../context/AuthContext";
@@ -29,54 +30,56 @@ export default function ProfileScreen() {
   const appVersion = Constants.expoConfig?.version || "1.0.0";
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials(displayName)}</Text>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView style={styles.scroll}>
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials(displayName)}</Text>
+          </View>
+          <Text style={styles.name}>{displayName}</Text>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleBadgeText}>{roleLabel}</Text>
+          </View>
         </View>
-        <Text style={styles.name}>{displayName}</Text>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleBadgeText}>{roleLabel}</Text>
-        </View>
-      </View>
 
-      <View style={styles.card}>
-        <InfoRow icon="mail-outline" label="Email" value={user?.email} />
-        {user?.department?.name ? (
-          <InfoRow icon="business-outline" label="Department" value={user.department.name} />
-        ) : null}
-        {user?.team?.name ? (
-          <InfoRow icon="people-outline" label="Team" value={user.team.name} />
-        ) : null}
-      </View>
-
-      <TouchableOpacity style={styles.editButton} onPress={() => setEditVisible(true)}>
-        <Ionicons name="create-outline" size={16} color="#2563eb" />
-        <Text style={styles.editButtonText}>Edit Profile</Text>
-      </TouchableOpacity>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
         <View style={styles.card}>
-          <InfoRow icon="information-circle-outline" label="App Version" value={appVersion} />
-          <TouchableOpacity onPress={() => Linking.openURL("mailto:support@company.com")}>
-            <InfoRow icon="help-circle-outline" label="Support" value="support@company.com" isLink />
-          </TouchableOpacity>
+          <InfoRow icon="mail-outline" label="Email" value={user?.email} />
+          {user?.department?.name ? (
+            <InfoRow icon="business-outline" label="Department" value={user.department.name} />
+          ) : null}
+          {user?.team?.name ? (
+            <InfoRow icon="people-outline" label="Team" value={user.team.name} />
+          ) : null}
         </View>
-      </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={confirmLogout}>
-        <Ionicons name="log-out-outline" size={18} color="#fff" />
-        <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.editButton} onPress={() => setEditVisible(true)}>
+          <Ionicons name="create-outline" size={16} color="#2563eb" />
+          <Text style={styles.editButtonText}>Edit Profile</Text>
+        </TouchableOpacity>
 
-      <EditProfileModal
-        visible={editVisible}
-        user={user}
-        onClose={() => setEditVisible(false)}
-        onSaved={updateUser}
-      />
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <View style={styles.card}>
+            <InfoRow icon="information-circle-outline" label="App Version" value={appVersion} />
+            <TouchableOpacity onPress={() => Linking.openURL("mailto:support@company.com")}>
+              <InfoRow icon="help-circle-outline" label="Support" value="support@company.com" isLink />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={confirmLogout}>
+          <Ionicons name="log-out-outline" size={18} color="#fff" />
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
+
+        <EditProfileModal
+          visible={editVisible}
+          user={user}
+          onClose={() => setEditVisible(false)}
+          onSaved={updateUser}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -95,7 +98,8 @@ function InfoRow({ icon, label, value, isLink }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
-  header: { alignItems: "center", paddingTop: 32, paddingBottom: 24, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#f0f0f0" },
+  scroll: { flex: 1 },
+  header: { alignItems: "center", paddingTop: 20, paddingBottom: 24, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#f0f0f0" },
   avatar: { width: 72, height: 72, borderRadius: 20, backgroundColor: "#eef2ff", alignItems: "center", justifyContent: "center", marginBottom: 12 },
   avatarText: { color: "#4f46e5", fontWeight: "800", fontSize: 24 },
   name: { fontSize: 18, fontWeight: "700", color: "#111827" },

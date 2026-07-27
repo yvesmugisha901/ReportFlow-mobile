@@ -1,5 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { CommonActions } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useBadgeCounts } from "../context/BadgeCountsContext";
@@ -20,6 +21,31 @@ const ICONS = {
   Notifications: "notifications-outline",
   Profile: "person-outline",
 };
+
+// Whenever a tab that wraps a nested stack loses focus (blur), reset
+// that nested stack's navigation STATE back to its first/home screen -
+// not just its rendered view. This clears leftover screens like a
+// report detail pushed there by a notification tap.
+function resetOnBlur({ navigation, route }) {
+  return {
+    blur: () => {
+      const tabState = navigation.getState();
+      const thisTabRoute = tabState.routes.find((r) => r.name === route.name);
+      const nestedState = thisTabRoute?.state;
+
+      if (nestedState && nestedState.routes && nestedState.routes.length > 1) {
+        const homeRouteName = nestedState.routes[0].name;
+        navigation.dispatch({
+          ...CommonActions.reset({
+            index: 0,
+            routes: [{ name: homeRouteName }],
+          }),
+          target: nestedState.key,
+        });
+      }
+    },
+  };
+}
 
 export default function RoleBasedTabs() {
   const { user } = useAuth();
@@ -42,16 +68,25 @@ export default function RoleBasedTabs() {
       })}
     >
       {user?.role === ROLES.EMPLOYEE && (
-        <Tab.Screen name="Reports" component={EmployeeStack} />
+        <Tab.Screen
+          name="Reports"
+          component={EmployeeStack}
+          listeners={resetOnBlur}
+        />
       )}
 
       {(user?.role === ROLES.REVIEWER || user?.role === ROLES.APPROVER) && (
-        <Tab.Screen name="Dashboard" component={ReviewerDashboardStack} />
+        <Tab.Screen
+          name="Dashboard"
+          component={ReviewerDashboardStack}
+          listeners={resetOnBlur}
+        />
       )}
       {(user?.role === ROLES.REVIEWER || user?.role === ROLES.APPROVER) && (
         <Tab.Screen
           name="Approvals"
           component={ReviewerStack}
+          listeners={resetOnBlur}
           options={{
             tabBarBadge: pendingApprovals > 0 ? pendingApprovals : undefined,
           }}
@@ -59,7 +94,11 @@ export default function RoleBasedTabs() {
       )}
 
       {user?.role === ROLES.ADMIN && (
-        <Tab.Screen name="Dashboard" component={AdminStack} />
+        <Tab.Screen
+          name="Dashboard"
+          component={AdminStack}
+          listeners={resetOnBlur}
+        />
       )}
 
       <Tab.Screen
