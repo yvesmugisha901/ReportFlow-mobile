@@ -29,13 +29,19 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    const { token, user: loggedInUser } = await apiLogin(email, password);
+    const { token } = await apiLogin(email, password);
     await SecureStore.setItemAsync("authToken", token);
-    setUser(loggedInUser);
-    return loggedInUser;
+    // Always source the user object from /auth/me, the same call
+    // restoreSession() uses. This guarantees `user` has an identical
+    // shape (and a correctly-populated `role`) whether it came from a
+    // fresh login or a restored session, so RoleBasedTabs never sees
+    // a mismatched/missing role right after login.
+    const currentUser = await getCurrentUser();
+    setUser(currentUser);
+    return currentUser;
   }
 
-async function logout() {
+  async function logout() {
     await SecureStore.deleteItemAsync("authToken");
     setUser(null);
   }
