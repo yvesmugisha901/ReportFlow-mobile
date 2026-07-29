@@ -11,8 +11,33 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { getPendingReviews } from "../../api/reviews";
 import ReviewCard from "../../components/ReviewCard";
+import { useAuth } from "../../context/AuthContext";
+
+const COPY = {
+  reviewer: {
+    title: "Pending Reviews",
+    subtitle: (n) => `${n} report${n === 1 ? "" : "s"} from your department awaiting review`,
+    emptyTitle: "All caught up",
+    emptySubtitle: "No reports from your department need review right now.",
+  },
+  approver: {
+    title: "Pending Approvals",
+    subtitle: (n) => `${n} report${n === 1 ? "" : "s"} awaiting your final approval`,
+    emptyTitle: "All caught up",
+    emptySubtitle: "Nothing is waiting on your final approval right now.",
+  },
+  admin: {
+    title: "Pending Reports",
+    subtitle: (n) => `${n} report${n === 1 ? "" : "s"} in the review pipeline`,
+    emptyTitle: "All caught up",
+    emptySubtitle: "Nothing is currently in review or awaiting approval.",
+  },
+};
 
 export default function PendingApprovalsScreen({ navigation }) {
+  const { user } = useAuth();
+  const copy = COPY[user?.role] || COPY.reviewer;
+
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,11 +64,9 @@ export default function PendingApprovalsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Pending Reviews</Text>
+        <Text style={styles.headerTitle}>{copy.title}</Text>
         <Text style={styles.headerSubtitle}>
-          {loading
-            ? "Loading…"
-            : `${reports.length} report${reports.length === 1 ? "" : "s"} awaiting you`}
+          {loading ? "Loading…" : copy.subtitle(reports.length)}
         </Text>
       </View>
 
@@ -68,8 +91,8 @@ export default function PendingApprovalsScreen({ navigation }) {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="checkmark-done-circle-outline" size={56} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>All caught up</Text>
-              <Text style={styles.emptySubtitle}>Nothing is waiting on you right now.</Text>
+              <Text style={styles.emptyTitle}>{copy.emptyTitle}</Text>
+              <Text style={styles.emptySubtitle}>{copy.emptySubtitle}</Text>
             </View>
           }
         />

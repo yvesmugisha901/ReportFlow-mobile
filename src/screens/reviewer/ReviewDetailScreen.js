@@ -18,21 +18,33 @@ import { SERVER_ORIGIN } from "../../api/client";
 import StatusBadge from "../../components/StatusBadge";
 import { timeAgo, initials } from "../../utils/timeAgo";
 import { useBadgeCounts } from "../../context/BadgeCountsContext";
+import { useAuth } from "../../context/AuthContext";
+
+// Mirrors the backend's reviewReport() rules exactly:
+// reviewer can only act while status === 'submitted' (stage_1)
+// approver can only act while status === 'under_review' (stage_2)
+const STAGE_RULES = {
+  reviewer: "submitted",
+  approver: "under_review",
+};
+
+const TERMINAL_STATUSES = ["rejected", "changes_requested", "final_approved"];
 
 export default function ReviewDetailScreen({ route, navigation }) {
   const { reportId, fromNotifications } = route.params;
+  const { user } = useAuth();
   const { refreshBadges } = useBadgeCounts();
   const [report, setReport] = useState(null);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(null);
   const [downloading, setDownloading] = useState(false);
-  const [showRejectFlow, setShowRejectFlow] = useState(false); // NEW
-  const [rejectType, setRejectType] = useState("reject"); // NEW: "reject" | "changes"
+  const [showRejectFlow, setShowRejectFlow] = useState(false);
+  const [rejectType, setRejectType] = useState("reject"); // "reject" | "changes"
 
-  // NEW: if we arrived here from the Notifications tab, override the
-  // header back button so it returns to Notifications instead of
-  // popping within this tab's own (empty) stack.
+  // If we arrived here from the Notifications tab, override the header
+  // back button so it returns to Notifications instead of popping within
+  // this tab's own (empty) stack.
   useEffect(() => {
     if (fromNotifications) {
       navigation.setOptions({
@@ -79,7 +91,6 @@ export default function ReviewDetailScreen({ route, navigation }) {
     }
   }
 
-  // NEW: Reject button opens the flow instead of submitting directly
   function handleRejectTap() {
     setRejectType("reject");
     setShowRejectFlow(true);
@@ -119,7 +130,30 @@ export default function ReviewDetailScreen({ route, navigation }) {
 
   const submitter = report.submittedBy || report.employee || {};
   const reviewLogs = report.reviewLogs || [];
-  const alreadyDecided = ["approved", "rejected", "changes_requested"].includes(report.status);
+
+  const canAct = STAGE_RULES[user?.role] === report.status;
+  const isTerminal = TERMINAL_STATUSES.includes(report.status);
+
+  // Message shown when this user can't act right now, tailored to why —
+  // waiting on someone else vs. already finished.
+  function getReadOnlyMessage() {
+    if (isTerminal) {
+      return "This report has already been reviewed — see history above.";
+    }
+    if (report.status === "submitted" && user?.role === "approver") {
+      return "This report hasn't cleared Stage 1 review yet.";
+    }
+    if (report.status === "under_review" && user?.role === "reviewer") {
+      return "You've already approved this — it's now awaiting final approval.";
+    }
+    if (report.status === "under_review" && user?.role === "admin") {
+      return "Awaiting final approval.";
+    }
+    if (report.status === "submitted" && user?.role === "admin") {
+      return "Awaiting Stage 1 review.";
+    }
+    return "No action is available on this report right now.";
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -193,89 +227,82 @@ export default function ReviewDetailScreen({ route, navigation }) {
         </View>
       )}
 
-      {alreadyDecided ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Decision</Text>
-          <Text style={styles.decidedText}>
-            This report has already been reviewed — see history above.
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Decision</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{canAct ? "Your Decision" : "Decision"}</Text>
 
-          {showRejectFlow ? (
-            <>
-              <Text style={styles.rejectPrompt}>What's the outcome?</Text>
-              <View style={styles.typeToggleRow}>
-                <TypeOption
-                  label="Reject"
-                  selected={rejectType === "reject"}
-                  color="#DC2626"
-                  onPress={() => setRejectType("reject")}
-                />
-                <TypeOption
-                  label="Request Changes"
-                  selected={rejectType === "changes"}
-                  color="#D97706"
-                  onPress={() => setRejectType("changes")}
-                />
-              </View>
-
-              <TextInput
-                style={styles.textArea}
-                multiline
-                numberOfLines={4}
-                placeholder={
-                  rejectType === "changes"
-                    ? "Explain what changes are needed..."
-                    : "Explain why you're rejecting this report..."
-                }
-                placeholderTextColor="#9CA3AF"
-                value={comment}
-                onChangeText={setComment}
-                autoFocus
-              />
-              <View style={styles.actionsRow}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={cancelReject}
-                  disabled={!!acting}
-                >
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <ActionButton
-                  label={rejectType === "changes" ? "Confirm Changes" : "Confirm Reject"}
-                  icon={rejectType === "changes" ? "create-outline" : "close-circle"}
-                  color={rejectType === "changes" ? "#D97706" : "#DC2626"}
-                  loading={acting === rejectType}
-                  disabled={!!acting || !comment.trim()}
-                  onPress={() => handleDecision(rejectType)}
-                />
-              </View>
-            </>
-          ) : (
-            <View style={styles.actionsRow}>
-              <ActionButton
-                label="Approve"
-                icon="checkmark-circle"
-                color="#16A34A"
-                loading={acting === "approve"}
-                disabled={!!acting}
-                onPress={() => handleDecision("approve")}
-              />
-              <ActionButton
+        {!canAct ? (
+          <Text style={styles.decidedText}>{getReadOnlyMessage()}</Text>
+        ) : showRejectFlow ? (
+          <>
+            <Text style={styles.rejectPrompt}>What's the outcome?</Text>
+            <View style={styles.typeToggleRow}>
+              <TypeOption
                 label="Reject"
-                icon="close-circle"
+                selected={rejectType === "reject"}
                 color="#DC2626"
-                loading={false}
-                disabled={!!acting}
-                onPress={handleRejectTap}
+                onPress={() => setRejectType("reject")}
+              />
+              <TypeOption
+                label="Request Changes"
+                selected={rejectType === "changes"}
+                color="#D97706"
+                onPress={() => setRejectType("changes")}
               />
             </View>
-          )}
-        </View>
-      )}
+
+            <TextInput
+              style={styles.textArea}
+              multiline
+              numberOfLines={4}
+              placeholder={
+                rejectType === "changes"
+                  ? "Explain what changes are needed..."
+                  : "Explain why you're rejecting this report..."
+              }
+              placeholderTextColor="#9CA3AF"
+              value={comment}
+              onChangeText={setComment}
+              autoFocus
+            />
+            <View style={styles.actionsRow}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={cancelReject}
+                disabled={!!acting}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <ActionButton
+                label={rejectType === "changes" ? "Confirm Changes" : "Confirm Reject"}
+                icon={rejectType === "changes" ? "create-outline" : "close-circle"}
+                color={rejectType === "changes" ? "#D97706" : "#DC2626"}
+                loading={acting === rejectType}
+                disabled={!!acting || !comment.trim()}
+                onPress={() => handleDecision(rejectType)}
+              />
+            </View>
+          </>
+        ) : (
+          <View style={styles.actionsRow}>
+            <ActionButton
+              label="Approve"
+              icon="checkmark-circle"
+              color="#16A34A"
+              loading={acting === "approve"}
+              disabled={!!acting}
+              onPress={() => handleDecision("approve")}
+            />
+            <ActionButton
+              label="Reject"
+              icon="close-circle"
+              color="#DC2626"
+              loading={false}
+              disabled={!!acting}
+              onPress={handleRejectTap}
+            />
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -299,7 +326,6 @@ function ActionButton({ label, icon, color, loading, disabled, onPress }) {
   );
 }
 
-// NEW: small segmented-style toggle used inside the reject flow
 function TypeOption({ label, selected, color, onPress }) {
   return (
     <TouchableOpacity
