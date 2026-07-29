@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Linking,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -68,6 +69,12 @@ export default function RegisterEmployeeScreen({ navigation }) {
     return null;
   }
 
+  function openEmailPreview(url) {
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Could not open link", "Copy and open this URL manually:\n\n" + url)
+    );
+  }
+
   async function handleSubmit() {
     const validationError = validate();
     if (validationError) {
@@ -86,11 +93,23 @@ export default function RegisterEmployeeScreen({ navigation }) {
       });
 
       if (result.emailError) {
-        // Account was still created — surface the password since the email failed.
+        // Email failed to send — surface the password directly since there's
+        // no sent email for the admin to view.
         Alert.alert(
           "Account created — email failed",
           `${result.emailError}\n\nTemporary password: ${result.plainPassword}`,
           [{ text: "OK", onPress: () => navigation.goBack() }]
+        );
+      } else if (result.emailPreview) {
+        // Email was "sent" — let the admin open it to see exactly what the
+        // new user received, including their temporary password.
+        Alert.alert(
+          "Employee registered",
+          `${fullName.trim()} has been registered. A welcome email with login credentials was sent to ${email.trim()}.`,
+          [
+            { text: "View Sent Email", onPress: () => openEmailPreview(result.emailPreview) },
+            { text: "Done", style: "cancel", onPress: () => navigation.goBack() },
+          ]
         );
       } else {
         Alert.alert(
