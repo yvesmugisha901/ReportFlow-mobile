@@ -1,80 +1,283 @@
-# Mobile App – Internal Reporting System
+# 📱 Internal Reporting System - Mobile Application
 
-React Native (Expo, JavaScript) client for the Internal Reporting System.
-Talks to the existing Express backend — no separate web frontend needed.
+A cross-platform **React Native** mobile application built with **Expo** for the **Internal Reporting System**.
 
-## Setup
+The application enables employees and reviewers to manage reports from anywhere by connecting to the existing **Node.js (Express)** backend through REST APIs.
 
-```bash
-cd mobile
-npm install
-npx expo start
-```
+---
 
-Then press:
-- `a` to open in Android emulator
-- `i` to open in iOS simulator
-- Scan the QR code with the **Expo Go** app to run on a physical phone
+## ✨ Features
 
-## Connecting to your backend
+### Employee
+- Secure authentication
+- Submit scheduled reports
+- Upload supporting attachments
+- View submitted reports
+- Track report status
+- Receive notifications
 
-Edit `src/constants/config.js` and set `API_BASE_URL` depending on how you're testing:
+### Reviewer
+- View pending reports
+- Approve reports
+- Reject reports
+- Request report revisions
 
-| Environment              | API_BASE_URL                              |
-|---------------------------|--------------------------------------------|
-| Android emulator          | `http://10.0.2.2:5000/api`                 |
-| iOS simulator             | `http://localhost:5000/api`                |
-| Physical phone (same WiFi)| `http://<your-laptop-LAN-IP>:5000/api`     |
+### Authentication
+- JWT-based authentication
+- Persistent login session
+- Role-based navigation
 
-Replace `5000` with your Express server's actual port.
+---
 
-> On a physical phone, your laptop and phone **must be on the same WiFi network**,
-> and your laptop's firewall must allow inbound connections on that port.
+# 🛠 Tech Stack
 
-## Matching your backend routes
+| Technology | Purpose |
+|------------|---------|
+| React Native | Mobile application |
+| Expo | Development platform |
+| JavaScript | Programming language |
+| React Navigation | App navigation |
+| Axios | API communication |
+| Context API | Authentication state |
+| Express.js | Backend API |
+| PostgreSQL / MySQL | Database |
 
-The API layer in `src/api/` assumes standard REST routes:
+---
 
-- `POST /auth/login` → `{ token, user }`
-- `GET /auth/me` → current user
-- `GET /reports/mine`
-- `POST /reports` (multipart form for file upload)
-- `GET /reports/:id`
-- `GET /reviews/pending`
-- `POST /reviews/:id/decision`
-- `GET /notifications`
-- `PATCH /notifications/:id/read`
-- `POST /notifications/register-device`
-
-**Adjust these paths and response shapes in `src/api/*.js` to match your actual backend.**
-If your backend uses different field names (e.g. `accessToken` instead of `token`), update
-`src/context/AuthContext.js` and `src/api/auth.js` accordingly.
-
-## Project structure
+# 📂 Project Structure
 
 ```
 mobile/
-├── App.js                  # entry point
+│
+├── App.js
 ├── src/
-│   ├── api/                 # all backend calls, one file per resource
-│   ├── navigation/           # auth stack, role-based tabs, per-role stacks
-│   ├── screens/               # organized by role: auth/, employee/, reviewer/, shared/
-│   ├── components/            # reusable UI (StatusBadge, ReportCard)
-│   ├── context/                # AuthContext (JWT session state)
-│   └── constants/               # config.js — API_BASE_URL, roles, statuses
+│   ├── api/
+│   ├── components/
+│   ├── constants/
+│   ├── context/
+│   ├── navigation/
+│   ├── screens/
+│   └── utils/
+│
+├── assets/
+├── package.json
+└── README.md
 ```
 
-## Roles currently wired up
+---
 
-- **Employee**: submit reports (with file attachment), view own report list + detail
-- **Reviewer / Approver**: view pending approvals, approve / reject / request changes
-- **Admin**: placeholder tab (dashboard screens not yet built — recommend keeping
-  admin org-management on the web/desktop side, mobile isn't a great fit for that)
+# 🚀 Getting Started
 
-## Not yet implemented (next steps)
+## 1. Clone the repository
 
-- Push notifications (Expo push token registration is stubbed in `src/api/notifications.js`,
-  needs `expo-notifications` permission flow wired in `App.js`)
-- Admin dashboard/analytics screens
-- Pull-to-refresh on list screens
-- Offline handling / retry queue for submissions
+```bash
+git clone <repository-url>
+cd mobile
+```
+
+## 2. Install dependencies
+
+```bash
+npm install
+```
+
+## 3. Start the development server
+
+```bash
+npx expo start
+```
+
+---
+
+## Running the application
+
+Once Expo starts, you can choose one of the following:
+
+- Press **a** → Android Emulator
+- Press **i** → iOS Simulator (macOS only)
+- Scan the QR code using the **Expo Go** application on your mobile device
+
+---
+
+# 🔗 Backend Configuration
+
+The mobile application communicates with an existing Express backend.
+
+Configure the API URL inside:
+
+```
+src/constants/config.js
+```
+
+Example:
+
+```javascript
+export const API_BASE_URL = "http://192.168.1.20:5000/api";
+```
+
+Use the appropriate URL depending on your environment.
+
+| Environment | API URL |
+|-------------|---------|
+| Android Emulator | http://10.0.2.2:5000/api |
+| iOS Simulator | http://localhost:5000/api |
+| Physical Device | http://YOUR_LOCAL_IP:5000/api |
+
+> **Note**
+>
+> When testing on a physical device, ensure:
+>
+> - Both the phone and computer are connected to the same Wi-Fi network.
+> - The backend server is running.
+> - Firewall settings allow incoming connections.
+
+---
+
+# 🔐 Authentication
+
+The application uses **JWT Authentication**.
+
+Expected authentication endpoints:
+
+```
+POST   /auth/login
+GET    /auth/me
+```
+
+Example Login Response
+
+```json
+{
+    "token": "...",
+    "user": {
+        "id": 1,
+        "name": "John Doe",
+        "role": "Employee"
+    }
+}
+```
+
+If your backend uses different response formats or field names, update:
+
+```
+src/context/AuthContext.js
+src/api/auth.js
+```
+
+---
+
+# 📡 API Endpoints
+
+The mobile application consumes the following REST APIs.
+
+### Authentication
+
+```
+POST /auth/login
+GET  /auth/me
+```
+
+### Reports
+
+```
+GET    /reports/mine
+POST   /reports
+GET    /reports/:id
+```
+
+### Review Workflow
+
+```
+GET   /reviews/pending
+POST  /reviews/:id/decision
+```
+
+### Notifications
+
+```
+GET    /notifications
+PATCH  /notifications/:id/read
+POST   /notifications/register-device
+```
+
+---
+
+# 👥 User Roles
+
+## Employee
+
+- Submit reports
+- Upload attachments
+- View report history
+- Track approval progress
+
+## Department Reviewer
+
+- Review submitted reports
+- Approve reports
+- Reject reports
+- Request changes
+
+## Administrator
+
+- Dashboard (future enhancement)
+- Organization management
+- Analytics
+
+---
+
+# 📋 Project Features
+
+- Role-based authentication
+- Report submission
+- File upload support
+- Two-stage approval workflow
+- Report tracking
+- Status indicators
+- Notification support
+- REST API integration
+
+---
+
+# 📌 Future Improvements
+
+The following features are planned for future development:
+
+- Push Notifications using Expo Notifications
+- Offline report submission
+- Automatic synchronization
+- Pull-to-refresh
+- Dark mode
+- Admin analytics dashboard
+- Performance optimizations
+
+---
+
+# 🧪 Development
+
+Start Expo
+
+```bash
+npx expo start
+```
+
+Run on Android
+
+```bash
+a
+```
+
+Run on iOS
+
+```bash
+i
+```
+
+# 📖 Related Backend
+
+This mobile application is designed to work alongside the **Internal Reporting System REST API** built with:
+
+- Node.js
+- Express.js
+- PostgreSQL 
+
