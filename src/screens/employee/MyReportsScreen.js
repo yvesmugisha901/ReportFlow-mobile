@@ -11,21 +11,48 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { getMyReports } from "../../api/reports";
+import { getMySchedules } from "../../api/schedules";
 import ReportCard from "../../components/ReportCard";
 import StatCard from "../../components/StatCard";
 import { normalizeReport } from "../../utils/reportUtils";
 
 const PREVIEW_LIMIT = 5;
+const UPCOMING_WINDOW_DAYS = 7;
+
+function daysUntil(dateString) {
+  if (!dateString) return null;
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const deadline = new Date(dateString);
+  const diffMs = deadline - startOfToday;
+  return Math.round(diffMs / 86400000);
+}
+
+function formatDueLabel(days) {
+  if (days === 0) return "Due today";
+  if (days === 1) return "Due tomorrow";
+  if (days > 1) return `Due in ${days} days`;
+  if (days === -1) return "Overdue by 1 day";
+  return `Overdue by ${Math.abs(days)} days`;
+}
 
 export default function MyReportsScreen({ navigation }) {
   const [reports, setReports] = useState([]);
+  const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadAll = useCallback(async () => {
     try {
-      const reportsData = await getMyReports();
+      const [reportsData, schedulesData] = await Promise.all([
+        getMyReports(),
+        getMySchedules().catch((err) => {
+          console.warn("Failed to load schedules", err);
+          return [];
+        }),
+      ]);
       setReports(Array.isArray(reportsData) ? reportsData : reportsData?.reports ?? []);
+      setSchedules(schedulesData || []);
     } catch (err) {
       console.warn("Failed to load reports", err);
     } finally {
@@ -56,6 +83,13 @@ export default function MyReportsScreen({ navigation }) {
   const preview = normalized.slice(0, PREVIEW_LIMIT);
   const hasMore = normalized.length > PREVIEW_LIMIT;
 
+  // Upcoming = schedules whose deadline falls within the next N days (or is
+  // already overdue). Sorted soonest/most-overdue first.
+  const upcoming = schedules
+    .map((s) => ({ ...s, _daysUntil: daysUntil(s.deadline) }))
+    .filter((s) => s._daysUntil !== null && s._daysUntil <= UPCOMING_WINDOW_DAYS)
+    .sort((a, b) => a._daysUntil - b._daysUntil);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -78,6 +112,37 @@ export default function MyReportsScreen({ navigation }) {
             <StatCard label="Approved" value={String(counts.approved)} icon="checkmark-circle-outline" color="emerald" />
             <StatCard label="Needs Action" value={String(counts.rejected)} icon="alert-circle-outline" color="rose" />
           </View>
+
+          {upcoming.length > 0 && (
+            <View style={styles.upcomingSection}>
+              <Text style={styles.upcomingHeading}>Upcoming</Text>
+              <View style={styles.upcomingStack}>
+                {upcoming.map((s) => {
+                  const overdue = s._daysUntil < 0;
+                  return (
+                    <TouchableOpacity
+                      key={s.schedule_id}
+                      style={[styles.upcomingCard, overdue && styles.upcomingCardOverdue]}
+                      onPress={() => navigation.navigate("SelectSchedule")}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={overdue ? "alert-circle" : "calendar-outline"}
+                        size={16}
+                        color={overdue ? "#DC2626" : "#D97706"}
+                      />
+                      <View style={{ flex: 1, marginLeft: 8 }}>
+                        <Text style={styles.upcomingTitle} numberOfLines={1}>{s.title}</Text>
+                        <Text style={[styles.upcomingDue, overdue && styles.upcomingDueOverdue]}>
+                          {formatDueLabel(s._daysUntil)}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
 
           <TouchableOpacity
             style={styles.newButton}
@@ -127,14 +192,46 @@ export default function MyReportsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
   centered: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
-statsGrid: {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  justifyContent: "space-between",
-  alignItems: "flex-start",   // ← add this line
-  paddingHorizontal: 16,
-  paddingTop: 16,
-},
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  upcomingSection: {
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+  upcomingHeading: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#6B7280",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 8,
+  },
+  upcomingStack: {
+    gap: 8,
+  },
+  upcomingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFBEB",
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  upcomingCardOverdue: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FECACA",
+  },
+  upcomingTitle: { fontSize: 13, fontWeight: "600", color: "#111827" },
+  upcomingDue: { fontSize: 11.5, color: "#B45309", marginTop: 1, fontWeight: "600" },
+  upcomingDueOverdue: { color: "#DC2626" },
   newButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -145,6 +242,7 @@ statsGrid: {
     padding: 14,
     marginHorizontal: 16,
     marginBottom: 8,
+    marginTop: 16,
   },
   newButtonText: { color: "#fff", fontWeight: "700" },
   sectionHeaderRow: {
