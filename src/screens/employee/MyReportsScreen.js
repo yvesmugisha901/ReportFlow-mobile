@@ -83,9 +83,19 @@ export default function MyReportsScreen({ navigation }) {
   const preview = normalized.slice(0, PREVIEW_LIMIT);
   const hasMore = normalized.length > PREVIEW_LIMIT;
 
+  // Schedules that already have a report submitted against them shouldn't
+  // show up as "Upcoming" anymore, even if their deadline hasn't passed yet.
+  const submittedScheduleIds = new Set(
+    normalized
+      .map((r) => r.scheduleId)
+      .filter((id) => id !== null && id !== undefined)
+  );
+
   // Upcoming = schedules whose deadline falls within the next N days (or is
-  // already overdue). Sorted soonest/most-overdue first.
+  // already overdue) and that don't already have a submitted report.
+  // Sorted soonest/most-overdue first.
   const upcoming = schedules
+    .filter((s) => !submittedScheduleIds.has(s.schedule_id))
     .map((s) => ({ ...s, _daysUntil: daysUntil(s.deadline) }))
     .filter((s) => s._daysUntil !== null && s._daysUntil <= UPCOMING_WINDOW_DAYS)
     .sort((a, b) => a._daysUntil - b._daysUntil);

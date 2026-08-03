@@ -15,6 +15,7 @@ export function normalizeReport(r) {
     department: r.employee?.department?.name ?? r.department?.name ?? "—",
     submittedAt: r.submitted_at || r.createdAt,
     status: STATUS_LABEL[r.status] ?? r.status ?? "Pending",
+    scheduleId: r.schedule_id ?? r.schedule?.id ?? r.schedule?.schedule_id ?? null,
     isCustom: !r.schedule_id && !r.schedule, // no schedule attached = ad-hoc/custom report
   };
 }
